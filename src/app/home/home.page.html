@@ -44,32 +44,32 @@
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Startzustand</ion-label>
-                  <ion-input [(ngModel)]="newTransition.state" placeholder="Zx"></ion-input>
+                  <ion-input required="true" [(ngModel)]="newTransition.state" placeholder="Zx"></ion-input>
                 </ion-item>
               </ion-col>
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Eingabezeichen</ion-label>
-                  <ion-input [(ngModel)]="newTransition.input" size="1" (keypress)="validateInput($event)"></ion-input>
+                  <ion-input required="true" [(ngModel)]="newTransition.input" size="1" (keypress)="validateInput($event)"></ion-input>
                 </ion-item>
               </ion-col>
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Kellertop</ion-label>
-                  <ion-input (keypress)="validateStackTop($event)" [(ngModel)]="newTransition.stackTop" size="1">
+                  <ion-input required="true" (keypress)="validateStackTop($event)" [(ngModel)]="newTransition.stackTop" size="1">
                   </ion-input>
                 </ion-item>
               </ion-col>
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Zielzustand</ion-label>
-                  <ion-input [(ngModel)]="newTransition.stateNext" placeholder="Zy"></ion-input>
+                  <ion-input required="true" [(ngModel)]="newTransition.stateNext" placeholder="Zy"></ion-input>
                 </ion-item>
               </ion-col>
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked" (keypress)="validateOperation($event)">Operation</ion-label>
-                  <ion-input [(ngModel)]='newTransition.stackOp' size="1"></ion-input>
+                  <ion-input required="true" [(ngModel)]='newTransition.stackOp' size="1"></ion-input>
                 </ion-item>
               </ion-col>
               <ion-col size="1">
