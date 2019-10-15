@@ -6,7 +6,7 @@ Bisher ist nur ein rudimentäres Oberfächendesign implementiert.
 
 * nodeJS
 
-Projekt-Root dann einmal in der Kommandozeile 
+Im Projekt-Root dann einmal in der Kommandozeile 
 `npm install`
 sowie
 `ionic serve`
