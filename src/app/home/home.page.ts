@@ -75,6 +75,7 @@ export class HomePage {
   }
 
   addTransition(transition: Transition) {
+    debugger;
     let data = JSON.parse(JSON.stringify(transition));
     this.automat.transitions.push(data);
     this.automat.transitions.sort((a,b)=>{
