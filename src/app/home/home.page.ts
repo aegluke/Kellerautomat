@@ -18,6 +18,8 @@ export class HomePage {
     stackOp: '!'
   }
 
+  selectedIndex: number;
+
   /**
    * Validiert die Eingabe gegen das Eingabealphabet und das Kellertopzeichen
    */
@@ -77,8 +79,12 @@ export class HomePage {
       stackEmpty: '#',
       opNo: '!',
       opRemove: '?',
-      inputPosition: 0,
-      stack: '#'
+      stack: '#',
+      state: {
+        inputPosition: 0,
+        activeState: ''
+      },
+      stateStart: ''
     };
   }
 
@@ -97,7 +103,11 @@ export class HomePage {
 
   addTransition(transition: Transition) {
     debugger;
-    let data = JSON.parse(JSON.stringify(transition));
+    if (!this.automat.stateStart || this.automat.stateStart === '') {
+      this.automat.stateStart = transition.state;
+    }
+    this.selectedIndex = -1;
+    const data = JSON.parse(JSON.stringify(transition));
     this.automat.transitions.push(data);
     this.automat.transitions.sort((a, b) => {
       let result: number = a.state.localeCompare(b.state);
@@ -153,22 +163,79 @@ export class HomePage {
     return result;
   }
 
-  openTransition(transition: Transition) {
-    this.newTransition = transition;
+  openTransition(index: number) {
+    this.selectedIndex = index;
+    Object.assign(this.newTransition, this.automat.transitions[index]);
+  }
+
+  /**
+   * Entfernt einen Eintrag aus den Transistions
+   * @param number index Index des Eintrags
+   */
+  removeTransition(index: number) {
+    this.automat.transitions.splice(index, 1);
+    // der letzte Startstatus wurde geloescht?
+    if (this.automat.stateStart !== '' && !this.stateExists(this.automat.stateStart)) {
+      if (this.automat.transitions.length > 0) {
+        this.automat.stateStart = this.automat.transitions[0].state;
+      } else {
+        this.automat.stateStart = '';
+      }
+    }
+  }
+
+  /**
+   * Aktualisiert einen Eintrag der zuvor geoeffnet wurde
+   */
+  updateEntry() {
+    const checkMessage = this.checkTransition(this.newTransition);
+    if (checkMessage === '') {
+      const index = this.indexOfTransition(this.newTransition);
+      if (index > -1 && index !== this.selectedIndex) {
+        // Doublette abseits des augewaehlten Index
+        this.alertCtrl.create({
+          header: 'Doppelte Ausgangskonfiguration',
+          message: 'Es existiert bereits ein Zustandsübergang mit dieser Ausgangssituation - Diesen Zustandsübergang ersetzen?',
+          buttons: [{
+            text: 'Ersetzen',
+            handler: () => {
+              this.removeTransition(index);
+              this.addTransition(this.newTransition);
+            }
+          }, 'Abbrechen']
+        }).then(
+          (alert) => alert.present()
+        );
+      } else {
+        this.removeTransition(this.selectedIndex);
+        this.addTransition(this.newTransition);
+      }
+    } else {
+      this.showMessage('Fehler', checkMessage);
+    }
   }
 
   /**
    * Fuegt den aktuell bearbeiteten Eintrag hinzu
    */
   addEntry() {
-    const checkmessage = this.checkTransition(this.newTransition);
-    if (checkmessage === '') {
-      if (this.indexOfTransition(this.newTransition) > -1) {
+    const checkMessage = this.checkTransition(this.newTransition);
+    if (checkMessage === '') {
+      const index = this.indexOfTransition(this.newTransition);
+      if (index > -1) {
         this.alertCtrl.create({
           header: 'Doppelte Ausgangskonfiguration',
-          message: 'Es existiert bereits ein Zustandsübergang mit dieser Ausgangssituation - Diesen Zustandsübergang ersetzen?',
-          buttons: ['Ersetzen', 'Abbrechen']
-          // TODO: Handler implementieren
+          message: 'Es existiert bereits ein Zustandsübergang mit dieser Ausgangssituation - Überschreiben?',
+          buttons: [{
+            text: 'Überschreiben',
+            handler: () => {
+              // Ausgangszustand loeschen
+              this.removeTransition(this.selectedIndex);
+              // alten Zielzustand loeschen
+              this.removeTransition(index);
+              this.addTransition(this.newTransition);
+            }
+          }, 'Abbrechen']
         }).then(
           (alert) => alert.present()
         );
@@ -176,14 +243,30 @@ export class HomePage {
         this.addTransition(this.newTransition);
       }
     } else {
-      this.alertCtrl.create({
-        message: checkmessage,
-        header: 'Fehler',
-        buttons: ['Ok']
-      }).then((alert) => {
-        alert.present();
-      });
+      this.showMessage('Fehler', checkMessage);
     }
+  }
+
+  showMessage(title: string, shownMessage: string) {
+    this.alertCtrl.create({
+      message: shownMessage,
+      header: title,
+      buttons: ['Ok']
+    }).then((alert) => {
+      alert.present();
+    });
+  }
+
+  stateExists(state: string) {
+    return this.automat.transitions.filter(x => x.state === state).length > 0;
+  }
+
+  getTransitionStates() {
+    return this.automat.transitions.map(x => x.state);
+  }
+
+  step() {
+
   }
 
   constructor(public alertCtrl: AlertController) {

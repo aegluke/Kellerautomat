@@ -41,6 +41,14 @@
           <ion-list-header>Zustandsdefinition</ion-list-header>
           <ion-grid size="13">
             <ion-row>
+              <ion-col>
+                <ion-label>Startzustand</ion-label>
+                <ion-select [(ngModel)]="automat.stateStart">
+                  <ion-select-option *ngFor="let state of getTransitionStates()">{{state}}</ion-select-option>
+                </ion-select>
+              </ion-col>
+            </ion-row>
+            <ion-row>
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Startzustand</ion-label>
@@ -50,13 +58,15 @@
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Eingabezeichen</ion-label>
-                  <ion-input required="true" [(ngModel)]="newTransition.input" size="1" (keypress)="validateInput($event)"></ion-input>
+                  <ion-input required="true" [(ngModel)]="newTransition.input" size="1"
+                    (keypress)="validateInput($event)"></ion-input>
                 </ion-item>
               </ion-col>
               <ion-col size="2">
                 <ion-item>
                   <ion-label position="stacked">Kellertop</ion-label>
-                  <ion-input required="true" (keypress)="validateStackTop($event)" [(ngModel)]="newTransition.stackTop" size="1">
+                  <ion-input required="true" (keypress)="validateStackTop($event)" [(ngModel)]="newTransition.stackTop"
+                    size="1">
                   </ion-input>
                 </ion-item>
               </ion-col>
@@ -74,15 +84,23 @@
               </ion-col>
               <ion-col size="1">
                 <ion-buttons>
-                  <ion-button (click)="addEntry()">
+                  <ion-button (click)="addEntry()" title="Hinzufügen">
                     <ion-icon name="add"></ion-icon>
+                  </ion-button>
+                  <ion-button *ngIf="selectedIndex > -1" (click)="updateEntry()" title="Aktualisieren">
+                    <ion-icon name="checkmark"></ion-icon>
                   </ion-button>
                 </ion-buttons>
               </ion-col>
             </ion-row>
           </ion-grid>
-          <ion-item *ngFor="let trans of automat.transitions" (click)="openTransition(trans)">
-            <ion-label>{{getTransitionString(trans)}}</ion-label>
+          <ion-item *ngFor="let trans of automat.transitions; let i = index" [ngClass]="selectedIndex===i?'danger':''">
+            <ion-label (click)="openTransition(i)">{{getTransitionString(trans)}}</ion-label>
+            <ion-buttons slot="end">
+              <ion-button (click)="removeTransition(i)">
+                <ion-icon name="remove"></ion-icon>
+              </ion-button>
+            </ion-buttons>
           </ion-item>
         </ion-list>
       </ion-col>
@@ -100,7 +118,11 @@
   <ion-card *ngIf="automat !== undefined && automat !== null">
     <ion-card-header>
       <ion-toolbar>
-        <ion-buttons><ion-button><ion-icon name="play"></ion-icon></ion-button></ion-buttons>
+        <ion-buttons>
+          <ion-button>
+            <ion-icon name="play"></ion-icon>
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-card-header>
     <ion-card-content class="ion-no-padding">
@@ -112,26 +134,26 @@
                 <div class="charBox">
                   {{character}}
                 </div>
-                <div class="activeMarker ion-text-center" *ngIf="i == automat.inputPosition">
+                <div class="activeMarker ion-text-center" *ngIf="i == automat.state.inputPosition">
                   ^
                 </div>
               </div>
             </span>
           </ion-col>
         </ion-row>
-        <ion-row class="ion-no-margin ion-no-padding" >
+        <ion-row class="ion-no-margin ion-no-padding">
           <ion-col class="ion-no-padding ion-no-margin" size="6">
             <ion-list>
               <ion-list-header>Protokoll</ion-list-header>
             </ion-list>
           </ion-col>
           <ion-col size="6">
-              <div class="stack">
-                <div *ngFor="let character of getStackArray()">
-                   {{character}}
-                </div>
+            <div class="stack">
+              <div *ngFor="let character of getStackArray()">
+                {{character}}
               </div>
-            </ion-col>
+            </div>
+          </ion-col>
         </ion-row>
       </ion-grid>
     </ion-card-content>
