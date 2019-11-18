@@ -109,7 +109,7 @@
       <ion-col size="12">
         <ion-item>
           <ion-label position="stacked">Eingabe</ion-label>
-          <ion-input required [(ngModel)]='automat.input'>
+          <ion-input required [(ngModel)]='automat.inputStart'>
           </ion-input>
         </ion-item>
       </ion-col>
@@ -119,17 +119,21 @@
     <ion-card-header>
       <ion-toolbar>
         <ion-buttons>
-          <ion-button>
-            <ion-icon name="play"></ion-icon>
+          <ion-button (click)="step()">
+            <ion-icon name="skip-forward"></ion-icon>
+          </ion-button>
+          <ion-button (click)="resetAutomat()">
+            <ion-icon name="refresh"></ion-icon>
           </ion-button>
         </ion-buttons>
+        Aktueller Zustand: {{automat.state.activeState}}
       </ion-toolbar>
     </ion-card-header>
     <ion-card-content class="ion-no-padding">
       <ion-grid class="ion-no-padding ion-no-margin">
         <ion-row>
           <ion-col>
-            <span *ngFor="let character of getInputArray(), let i = index">
+            <span *ngFor="let character of getStateInputArray(), let i = index">
               <div class="inputChar">
                 <div class="charBox">
                   {{character}}
@@ -145,11 +149,14 @@
           <ion-col class="ion-no-padding ion-no-margin" size="6">
             <ion-list>
               <ion-list-header>Protokoll</ion-list-header>
+              <ion-item *ngFor="let trans of automat.state.protocol.reverse(); let i = index">
+                {{automat.state.protocol.length - i}}. {{getTransitionString(trans)}}
+              </ion-item>
             </ion-list>
           </ion-col>
           <ion-col size="6">
             <div class="stack">
-              <div *ngFor="let character of getStackArray()">
+              <div *ngFor="let character of getStateStackArray()">
                 {{character}}
               </div>
             </div>

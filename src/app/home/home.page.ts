@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Automat } from '../models/automat';
 import { Transition } from '../models/transition';
 import { AlertController } from '@ionic/angular';
+import { typeWithParameters } from '@angular/compiler/src/render3/util';
 
 @Component({
   selector: 'app-home',
@@ -16,7 +17,9 @@ export class HomePage {
     stackTop: '#',
     stateNext: 'Z',
     stackOp: '!'
-  }
+  };
+
+  running = false;
 
   selectedIndex: number;
 
@@ -35,7 +38,7 @@ export class HomePage {
   /**
    * Validiert gegen das Kelleralphabet und die Operationen
    */
-  validateOperation(event) {
+  validateOperation(event: any) {
     let result: boolean = (this.automat.alphabetStack.includes(event.key));
     result = result || this.automat.opRemove === event.key || this.automat.opNo === event.key;
     if (result) {
@@ -60,7 +63,7 @@ export class HomePage {
    * Liefert das Inputalphabet als Char-Array
    */
   getInputArray(): Array<string> {
-    return Array.from(this.automat.input);
+    return Array.from(this.automat.inputStart);
   }
 
   /**
@@ -72,19 +75,26 @@ export class HomePage {
 
   emptyAutomat(): Automat {
     return {
-      alphabetInput: 'abcde',
-      alphabetStack: 'xyz',
-      input: 'acddca',
-      transitions: [],
+      alphabetInput: '()',
+      alphabetStack: '(',
+      inputStart: '((())',
+      transitions: [
+        { state: 'Z1', stackTop: '#', stateNext: 'Z1', input: '(', stackOp: '(' },
+        { state: 'Z1', stackTop: '(', stateNext: 'Z1', input: '(', stackOp: '(' },
+        { state: 'Z1', stackTop: '(', stateNext: 'Z1', input: ')', stackOp: '?' }
+      ],
       stackEmpty: '#',
       opNo: '!',
       opRemove: '?',
       stack: '#',
       state: {
         inputPosition: 0,
-        activeState: ''
+        activeState: 'Z1',
+        protocol: [],
+        input: '',
+        stack: '#'
       },
-      stateStart: ''
+      stateStart: 'Z1'
     };
   }
 
@@ -102,7 +112,6 @@ export class HomePage {
   }
 
   addTransition(transition: Transition) {
-    debugger;
     if (!this.automat.stateStart || this.automat.stateStart === '') {
       this.automat.stateStart = transition.state;
     }
@@ -257,16 +266,109 @@ export class HomePage {
     });
   }
 
-  stateExists(state: string) {
+  /**
+   * Prueft ob ein Zustand bereits existiert
+   * @param state Status nach dem gesucht wird
+   */
+  stateExists(state: string): boolean {
     return this.automat.transitions.filter(x => x.state === state).length > 0;
   }
 
+  /**
+   * Liefert die Liste aller Status
+   */
   getTransitionStates() {
-    return this.automat.transitions.map(x => x.state);
+    return new Set(this.automat.transitions.map(x => x.state));
   }
 
-  step() {
 
+  resetAutomat() {
+    this.automat.state = {
+      activeState: this.automat.stateStart,
+      inputPosition: 0,
+      input: this.automat.inputStart,
+      protocol: [],
+      stack: this.automat.stackEmpty
+    };
+  }
+
+  /**
+   * Liefert das Inputalphabet als Char-Array
+   */
+  getStateInputArray(): Array<string> {
+    return Array.from(this.automat.state.input);
+  }
+
+  /**
+   * Liefert einen Zustandsuebergang anhand der Eingabewerte
+   * @param state Startstatus des Uebergangs
+   * @param input Eingabezeichen
+   * @param stackTop Kellertopzeichen
+   */
+  getTransition(state: string, input: string, stackTop: string): Transition {
+    for (const transition of this.automat.transitions) {
+      if (transition.state === state && transition.input === input && transition.stackTop === stackTop) {
+        return transition;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Liefert den aktuellen Keller als Char-Array
+   */
+  getStateStackArray(): Array<string> {
+    return Array.from(this.automat.state.stack);
+  }
+  /**
+   * Fuehrt einen Schritt aus
+   */
+  step() {
+    if (!this.running) {
+      this.resetAutomat();
+      this.running = true;
+      return;
+    }
+    const transition = this.getTransition(
+      this.automat.state.activeState,
+      this.getStateInputArray()[this.automat.state.inputPosition],
+      this.getStateStackArray()[0]);
+    if (transition == null) {
+      // Fehlerstatus
+      this.showMessage('Fehler','Kein Zustand für die Ausgangssituation gefunden.');
+      this.running = false;
+      return;
+    }
+    this.automat.state.protocol.push(transition);
+    switch (transition.stackOp) {
+      case this.automat.opNo:
+        break;
+      case this.automat.opRemove:
+        this.automat.state.stack = this.automat.state.stack.substr(1);
+        if (this.automat.state.stack === '') {
+          this.running = false;
+          this.showMessage('Fehler','Keller leer');
+        }
+        break;
+      default:
+        this.automat.state.stack = transition.input + this.automat.state.stack;
+        break;
+    }
+    if (this.automat.state.inputPosition === this.automat.state.input.length - 1 ) {
+      // Ende der Eingabe erreicht
+      this.running = false;
+
+      if (this.automat.state.stack === this.automat.stackEmpty){
+        // Akzeptierte Eingabe
+        this.running = false;
+        this.showMessage('Hurra!', 'Eingabe akzeptiert.');
+      } else {
+        this.running = false;
+        this.showMessage('Fehler','Eingabe leer, der Keller ist noch voll!');
+      }
+    }
+    this.automat.state.inputPosition++;
+    this.automat.state.activeState = transition.stateNext;
   }
 
   constructor(public alertCtrl: AlertController) {
