@@ -324,6 +324,7 @@ export class HomePage {
    * Fuehrt einen Schritt aus
    */
   step() {
+    debugger;
     if (!this.running) {
       this.resetAutomat();
       this.running = true;
@@ -351,7 +352,7 @@ export class HomePage {
         }
         break;
       default:
-        this.automat.state.stack = transition.input + this.automat.state.stack;
+        this.automat.state.stack = transition.stackOp + this.automat.state.stack;
         break;
     }
     if (this.automat.state.inputPosition === this.automat.state.input.length - 1 ) {
